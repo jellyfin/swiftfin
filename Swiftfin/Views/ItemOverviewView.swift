@@ -28,9 +28,7 @@ struct ItemOverviewView: View {
                 }
 
                 if let itemOverview = item.overview {
-                    Text(itemOverview)
-                        .font(.body)
-                        .multilineTextAlignment(.leading)
+                    HTMLFormattedText(itemOverview)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
