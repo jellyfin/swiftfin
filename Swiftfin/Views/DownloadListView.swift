@@ -6,57 +6,79 @@
 // Copyright (c) 2024 Jellyfin & Jellyfin Contributors
 //
 
+import Factory
 import SwiftUI
 
 struct DownloadListView: View {
+    @EnvironmentObject
+    private var mainRouter: MainCoordinator.Router
 
     @ObservedObject
     var viewModel: DownloadListViewModel
 
+    @ObservedObject
+    var downloadManager: DownloadManager
+
     var body: some View {
         ScrollView(showsIndicators: false) {
-            ForEach(viewModel.items) { item in
-                DownloadTaskRow(downloadTask: item)
+            ForEach(downloadManager.downloads) { item in
+                DownloadTaskRow(downloadManager: downloadManager, downloadTask: item)
+                RowDivider()
             }
         }
         .navigationTitle(L10n.downloads)
         .navigationBarTitleDisplayMode(.inline)
+        .topBarTrailing {
+            SettingsBarButton(
+                server: viewModel.userSession.server,
+                user: viewModel.userSession.user
+            ) {
+                mainRouter.route(to: \.settings)
+            }
+        }
     }
 }
 
 extension DownloadListView {
-
     struct DownloadTaskRow: View {
+        @ObservedObject
+        var downloadManager: DownloadManager
 
         @EnvironmentObject
         private var router: DownloadListCoordinator.Router
 
-        let downloadTask: DownloadTask
+        let downloadTask: DownloadEntity
 
         var body: some View {
             Button {
                 router.route(to: \.downloadTask, downloadTask)
             } label: {
-                HStack(alignment: .bottom) {
-                    ImageView(downloadTask.getImageURL(name: "Primary"))
+                HStack(alignment: .center) {
+                    ImageView(downloadTask.landscapeImageSources())
                         .failure {
                             Color.secondary
                                 .opacity(0.8)
                         }
-//                        .posterStyle(type: .portrait, width: 60)
+                        .scaledToFit()
+                        .frame(maxWidth: 100)
+                        .posterStyle(.landscape)
                         .posterShadow()
+                        .padding(.horizontal)
 
-                    VStack(alignment: .leading) {
-                        Text(downloadTask.item.displayTitle)
-                            .foregroundColor(.primary)
-                            .fontWeight(.semibold)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.vertical)
+                    Text(downloadTask.item.displayTitle)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.leading)
 
                     Spacer()
+                    Button {
+                        downloadManager.remove(task: downloadTask)
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                    .padding(.vertical)
                 }
             }
         }

@@ -15,6 +15,9 @@ extension DownloadTaskView {
 
     struct ContentView: View {
 
+        @Default(.Experimental.offlineMode)
+        private var offlineMode
+
         @Default(.accentColor)
         private var accentColor
 
@@ -27,7 +30,7 @@ extension DownloadTaskView {
         private var router: DownloadTaskCoordinator.Router
 
         @ObservedObject
-        var downloadTask: DownloadTask
+        var downloadTask: DownloadEntity
 
         @State
         private var isPresentingVideoPlayerTypeError: Bool = false
@@ -36,24 +39,29 @@ extension DownloadTaskView {
             VStack(alignment: .leading, spacing: 10) {
 
                 VStack(alignment: .center) {
-                    ImageView(downloadTask.item.landscapeImageSources(maxWidth: 600))
-                        .frame(maxHeight: 300)
-                        .aspectRatio(1.77, contentMode: .fill)
-                        .cornerRadius(10)
-                        .padding(.horizontal)
-                        .posterShadow()
+                    ImageView(
+                        offlineMode ? downloadTask.item.portraitImageSources() : downloadTask.item
+                            .landscapeImageSources(maxWidth: 600)
+                    )
+                    .frame(maxHeight: 300)
+                    .aspectRatio(1.77, contentMode: .fill)
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                    .posterShadow()
 
                     ShelfView(downloadTask: downloadTask)
 
                     // TODO: Break into subview
                     switch downloadTask.state {
                     case .ready, .cancelled:
-                        PrimaryButton(title: "Download")
-                            .onSelect {
-                                downloadManager.download(task: downloadTask)
-                            }
-                            .frame(maxWidth: 300)
-                            .frame(height: 50)
+                        if !offlineMode {
+                            PrimaryButton(title: "Download")
+                                .onSelect {
+                                    downloadManager.download(task: downloadTask)
+                                }
+                                .frame(maxWidth: 300)
+                                .frame(height: 50)
+                        }
                     case let .downloading(progress):
                         HStack {
                             CircularProgressView(progress: progress)
@@ -61,6 +69,8 @@ extension DownloadTaskView {
                                 .frame(width: 30, height: 30)
 
                             Text("\(Int(progress * 100))%")
+                                .foregroundColor(.secondary)
+                            Text("\(Int(progress * Double(downloadTask.expectedSize)).sizeLable)/\(downloadTask.expectedSize.sizeLable)")
                                 .foregroundColor(.secondary)
 
                             Spacer()
@@ -87,24 +97,29 @@ extension DownloadTaskView {
                         }
                     case .complete:
                         PrimaryButton(title: L10n.play)
+//                            .onSelect {
+//                                if Defaults[.VideoPlayer.videoPlayerType] == .swiftfin {
+//                                    router.dismissCoordinator {
+//                                        mainCoordinator.route(to: \.videoPlayer, DownloadVideoPlayerManager(downloadTask: downloadTask))
+//                                    }
+//                                } else {
+//                                    isPresentingVideoPlayerTypeError = true
+//                                }
+//                            }
+                                .frame(maxWidth: 300)
+                                .frame(height: 50)
+                        Text("Size: \(downloadTask.expectedSize.sizeLable)")
+                            .font(.subheadline)
+                            .fontWeight(.regular)
+                            .padding(.horizontal)
+                        PrimaryButton(title: "Delete")
                             .onSelect {
-                                if Defaults[.VideoPlayer.videoPlayerType] == .swiftfin {
-                                    router.dismissCoordinator {
-                                        mainCoordinator.route(to: \.videoPlayer, DownloadVideoPlayerManager(downloadTask: downloadTask))
-                                    }
-                                } else {
-                                    isPresentingVideoPlayerTypeError = true
-                                }
+                                downloadManager.remove(task: downloadTask)
                             }
-                            .frame(maxWidth: 300)
+                            .frame(maxWidth: 200)
                             .frame(height: 50)
                     }
                 }
-
-//                Text("Media Info")
-//                    .font(.title2)
-//                    .fontWeight(.semibold)
-//                    .padding(.horizontal)
             }
             .alert(
                 L10n.error,
@@ -127,7 +142,7 @@ extension DownloadTaskView.ContentView {
     struct ShelfView: View {
 
         @ObservedObject
-        var downloadTask: DownloadTask
+        var downloadTask: DownloadEntity
 
         var body: some View {
             VStack(alignment: .center, spacing: 10) {
@@ -167,6 +182,13 @@ extension DownloadTaskView.ContentView {
                     if let runtime = downloadTask.item.runTimeLabel {
                         Text(runtime)
                     }
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+
+                DotHStack {
+                    Text(downloadTask.expectedSize.sizeLable)
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)

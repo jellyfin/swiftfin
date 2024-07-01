@@ -11,6 +11,10 @@ import SwiftUI
 
 struct ExperimentalSettingsView: View {
 
+    @Default(.Experimental.offlineMode)
+    private var offlineMode
+    @Default(.Experimental.downloads)
+    private var enableDownloads
     @Default(.Experimental.forceDirectPlay)
     private var forceDirectPlay
     @Default(.Experimental.liveTVForceDirectPlay)
@@ -18,6 +22,12 @@ struct ExperimentalSettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                Toggle("Offline Mode", isOn: $offlineMode)
+                Toggle("Enable Downloads", isOn: $enableDownloads)
+            } header: {
+                Text("General")
+            }
             Section {
 
                 Toggle("Force Direct Play", isOn: $forceDirectPlay)

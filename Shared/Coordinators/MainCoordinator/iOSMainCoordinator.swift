@@ -21,6 +21,9 @@ import SwiftUI
 
 final class MainCoordinator: NavigationCoordinatable {
 
+    @Default(.Experimental.offlineMode)
+    private var offlineMode
+
     @Injected(LogManager.service)
     private var logger
 
@@ -30,6 +33,8 @@ final class MainCoordinator: NavigationCoordinatable {
     var loading = makeLoading
     @Root
     var mainTab = makeMainTab
+    @Root
+    var offlineView = makeOffline
     @Root
     var selectUser = makeSelectUser
     @Root
@@ -50,6 +55,14 @@ final class MainCoordinator: NavigationCoordinatable {
             do {
                 try await SwiftfinStore.setupDataStack()
 
+                if offlineMode {
+                    await MainActor.run {
+                        withAnimation(.linear(duration: 0.1)) {
+                            let _ = root(\.offlineView)
+                        }
+                    }
+                    return
+                }
                 if UserSession.current() != nil, !Defaults[.signOutOnClose] {
                     await MainActor.run {
                         withAnimation(.linear(duration: 0.1)) {
@@ -136,6 +149,10 @@ final class MainCoordinator: NavigationCoordinatable {
 
     func makeMainTab() -> MainTabCoordinator {
         MainTabCoordinator()
+    }
+
+    func makeOffline() -> NavigationViewCoordinator<OfflineCoordinator> {
+        NavigationViewCoordinator(OfflineCoordinator())
     }
 
     func makeSelectUser() -> NavigationViewCoordinator<SelectUserCoordinator> {

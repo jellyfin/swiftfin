@@ -6,9 +6,13 @@
 // Copyright (c) 2024 Jellyfin & Jellyfin Contributors
 //
 
+import Defaults
 import SwiftUI
 
 struct ServerCheckView: View {
+
+    @Default(.Experimental.offlineMode)
+    private var offlineMode
 
     @EnvironmentObject
     private var router: MainCoordinator.Router
@@ -35,6 +39,16 @@ struct ServerCheckView: View {
                 .onSelect {
                     viewModel.send(.checkServer)
                 }
+                .frame(maxWidth: 300)
+                .frame(height: 50)
+
+            Text("or")
+            PrimaryButton(title: "Go offline")
+                .onSelect {
+                    offlineMode = true
+                    router.root(\.offlineView)
+                }
+                .foregroundStyle(.foreground)
                 .frame(maxWidth: 300)
                 .frame(height: 50)
         }
