@@ -19,6 +19,7 @@ struct ItemFilterCollection: Codable, Defaults.Serializable, Hashable {
     var sortOrder: [ItemSortOrder] = [ItemSortOrder.ascending]
     var tags: [ItemTag] = []
     var traits: [ItemTrait] = []
+    var types: [BaseItemKind] = [.movie, .series, .boxSet]
     var years: [ItemYear] = []
 
     /// The default collection of filters
