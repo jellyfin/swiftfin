@@ -10,15 +10,31 @@ import SwiftUI
 
 struct ListRowButton: View {
 
+    // MARK: - Environment
+
+    @Environment(\.isEnabled)
+    private var isEnabled
+
+    // MARK: - Focus State
+
+    @FocusState
+    private var isFocused: Bool
+
+    // MARK: - Button Variables
+
     let title: String
     let role: ButtonRole?
     let action: () -> Void
+
+    // MARK: - Initializer
 
     init(_ title: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
         self.title = title
         self.role = role
         self.action = action
     }
+
+    // MARK: - Body
 
     var body: some View {
         Button {
@@ -28,16 +44,23 @@ struct ListRowButton: View {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(secondaryStyle)
 
+                if !isEnabled {
+                    Color.black.opacity(0.5)
+                } else if isFocused {
+                    Color.white.opacity(0.25)
+                }
+
                 Text(title)
                     .foregroundStyle(primaryStyle)
                     .font(.body.weight(.bold))
             }
         }
         .buttonStyle(.card)
-        .frame(height: 75)
+        .frame(maxHeight: 75)
+        .focused($isFocused)
     }
 
-    // MARK: - Styles
+    // MARK: - Primary Style
 
     private var primaryStyle: some ShapeStyle {
         if role == .destructive {
@@ -46,6 +69,8 @@ struct ListRowButton: View {
             return AnyShapeStyle(.primary)
         }
     }
+
+    // MARK: - Secondary Style
 
     private var secondaryStyle: some ShapeStyle {
         if role == .destructive {
