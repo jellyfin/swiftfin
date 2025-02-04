@@ -30,6 +30,11 @@ struct PagingLibraryView<Element: Poster & Identifiable>: View {
     @Default
     private var defaultPosterType: PosterDisplayType
 
+    @Default(.Customization.Library.letterPickerEnabled)
+    private var letterPickerEnabled
+    @Default(.Customization.Library.letterPickerOrientation)
+    private var letterPickerOrientation
+
     @EnvironmentObject
     private var router: LibraryCoordinator<Element>.Router
 
@@ -276,7 +281,7 @@ struct PagingLibraryView<Element: Poster & Identifiable>: View {
                 listItemView(item: item, posterType: posterType)
             }
         }
-        .onReachedBottomEdge(offset: .rows(3)) {
+        .onReachedBottomEdge(offset: .offset(300)) {
             viewModel.send(.getNextPage)
         }
         .proxy(collectionVGridProxy)
@@ -301,49 +306,34 @@ struct PagingLibraryView<Element: Poster & Identifiable>: View {
         }
     }
 
-    // MARK: Content View
-
     @ViewBuilder
     private var contentView: some View {
+        Group {
+            if letterPickerEnabled, let filterViewModel = viewModel.filterViewModel {
+                ZStack(alignment: letterPickerOrientation.alignment) {
+                    innerContent
+                        .padding(letterPickerOrientation.edge, LetterPickerBar.size + 10)
+                        .frame(maxWidth: .infinity)
 
-        innerContent
-            // These exist here to alleviate type-checker issues
-                .onChange(of: posterType) {
-                    setCustomLayout()
+                    LetterPickerBar(viewModel: filterViewModel)
+                        .padding(.top, safeArea.top)
+                        .padding(.bottom, safeArea.bottom)
+                        .padding(letterPickerOrientation.edge, 10)
                 }
-                .onChange(of: displayType) {
-                    setCustomLayout()
-                }
-                .onChange(of: listColumnCount) {
-                    setCustomLayout()
-                }
-
-        // Logic for LetterPicker. Enable when ready
-
-        /* if letterPickerEnabled, let filterViewModel = viewModel.filterViewModel {
-             ZStack(alignment: letterPickerOrientation.alignment) {
-                 innerContent
-                     .padding(letterPickerOrientation.edge, LetterPickerBar.size + 10)
-                     .frame(maxWidth: .infinity)
-
-                 LetterPickerBar(viewModel: filterViewModel)
-                     .padding(.top, safeArea.top)
-                     .padding(.bottom, safeArea.bottom)
-                     .padding(letterPickerOrientation.edge, 10)
-             }
-         } else {
-            innerContent
-         }
-         // These exist here to alleviate type-checker issues
-         .onChange(of: posterType) {
-             setCustomLayout()
-         }
-         .onChange(of: displayType) {
-             setCustomLayout()
-         }
-         .onChange(of: listColumnCount) {
-             setCustomLayout()
-         }*/
+            } else {
+                innerContent
+            }
+        }
+        // These exist here to alleviate type-checker issues
+        .onChange(of: posterType) {
+            setCustomLayout()
+        }
+        .onChange(of: displayType) {
+            setCustomLayout()
+        }
+        .onChange(of: listColumnCount) {
+            setCustomLayout()
+        }
     }
 
     // MARK: Body
